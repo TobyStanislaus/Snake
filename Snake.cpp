@@ -45,8 +45,11 @@ class Snake{
         else if (direction == 'r'){x+=1;}
     }
 
-    void update_position(Field& field){
+    bool check_and_update_position(Field& field){
+        if (x<0||y<0||x>=field[0].size()||y>=field.size()){return false;}
+        if ((field[y][x] == '0')){return false;}
         field[y][x] = '0';
+        return true;
     }
 };
 
@@ -64,6 +67,7 @@ void display_field(Field field){
 
 int main(){
     Snake snake;
+    bool survived;
     Field field(height, std::vector<char>(width, ' '));
 
 
@@ -79,7 +83,13 @@ int main(){
             else if (key == 'd'){snake.direction = 'r';}
         }
         snake.move();
-        snake.update_position(field);
+        survived = snake.check_and_update_position(field);
+
+        if (!survived){
+            std::cout<<"You Lost!";
+            break;
+        }
+
         display_field(field);
 
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
