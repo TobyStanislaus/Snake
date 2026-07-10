@@ -1,0 +1,8 @@
+# Compiled binaries
+*.exe
+*.o
+*.obj
+
+# Build folders (if you use one)
+build/
+bin/
