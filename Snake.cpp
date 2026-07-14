@@ -35,10 +35,7 @@ struct Point {
     int x;
     int y;
     Point() = default;
-    Point(int x_a, int y_a){
-        x= x_a;
-        y= y_a;
-    }
+    Point(int x, int y): x(x), y(y) {}
 
     bool operator==(const Point& other) const {
         return x == other.x && y == other.y;
@@ -58,7 +55,7 @@ std::mt19937 gen(rd());
 void initialise_pos_positions(Body& possible_positions){
     for (int i=0;i<width;i++){
         for (int j=0; j<height; j++){
-            possible_positions.push_back(Point(i,j));
+            possible_positions.emplace_back(i,j);
         }
     }
 }
@@ -72,47 +69,37 @@ struct Snake{
     char direction = 'd';
     Body possible_positions;
 
+
     Snake(){
         initialise_pos_positions(possible_positions);
 
         body.insert(body.begin(), Point{0,0});
-
-        possible_positions.erase(
-        std::remove(possible_positions.begin(),
-                    possible_positions.end(),
-                    Point{0, 0}),
-        possible_positions.end());
-
+        std::erase(possible_positions, Point{0,0});
     };
-      
+    
+
     bool move(Field& field){
         if (direction == 'u'){y-=1;}
         else if (direction == 'd'){y+=1;}
         else if (direction == 'l'){x-=1;}
         else if (direction == 'r'){x+=1;}
 
-        Point newpoint{x, y};
-        if (check_move(field, newpoint)==false){return false;}
+        if (check_move(field)==false){return false;}
 
-        body.insert(body.begin(), newpoint);
-
-
-        possible_positions.erase(
-            std::remove(possible_positions.begin(),
-                        possible_positions.end(),
-                        Point{x, y}),
-            possible_positions.end());
+        body.insert(body.begin(), Point{x,y});
+        std::erase(possible_positions, Point{x, y});
 
         return true;
     }
 
-    bool check_move(Field& field, Point newpoint){
+
+    bool check_move(Field& field){
         // checking bounds
         if ((x<0)||(y<0)||(x>=field[0].size())||(y>=field.size())){
             return false;
         }
         // checking its not crossed over itself
-        if (!(std::find(body.begin(), body.end(), newpoint) == body.end())){
+        if (std::find(body.begin(), body.end(), Point{x,y}) != body.end()){
             return false;
         }
         return true;
@@ -127,12 +114,12 @@ struct Snake{
 
 
     bool check_fruit(Point fruit){
-        if ((x==fruit.x)&&(y==fruit.y)){return true;}
-        return false;
+        return Point{x,y} == fruit;
     }
 
 
     void spawn_fruit(Point& fruit){
+        if (possible_positions.empty()){return;}
         std::uniform_int_distribution<> dist(0, possible_positions.size()-1);
         int random_number = dist(gen);
         fruit = possible_positions[random_number];
@@ -176,6 +163,7 @@ int main(){
 
     while (true)
     {
+        //read input
         if (_kbhit())
         {
             char key = _getch();
@@ -185,11 +173,12 @@ int main(){
             else if (key == 'a'&&snake.direction!='r'){snake.direction = 'l';}
             else if (key == 'd'&&snake.direction!='l'){snake.direction = 'r';}
         }
-
+        
+        //move snake
         survived = snake.move(field);
         snake.place_snake(field);
 
-
+        //check collision
         if (snake.check_fruit(fruit)){
             snake.spawn_fruit(fruit);
             field[fruit.y][fruit.x] = 'A';
@@ -197,20 +186,22 @@ int main(){
         remove_part = snake.body.back();
         field[remove_part.y][remove_part.x] = ' ';
         snake.body.pop_back();
-
         snake.possible_positions.push_back(remove_part);
         }
 
-
+        // check fruit
         if (field[fruit.y][fruit.x] != '0'){
             field[fruit.y][fruit.x] = 'A';
         }
-        display_field(field);
 
         if (!survived){
             std::cout<<"You Lost!";
             break;
         }
+        //display
+        display_field(field);
+
+
 
         std::this_thread::sleep_for(std::chrono::milliseconds(250));
     }
