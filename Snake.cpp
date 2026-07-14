@@ -53,20 +53,23 @@ using Body = std::vector<Point>;
 
 struct Snake{
     int x = 0;
-    int y = 0;
+    int y = 2;
     Body body;
     char direction = 'd';
-    std::vector<int> possi_width{width};
-    std::vector<int> possi_height{height};
+    std::vector<int> possi_width;
+    std::vector<int> possi_height;
 
 
     Snake(){
+        possi_width.resize(width);
+        possi_height.resize(height);
+
         std::iota(possi_width.begin(), possi_width.end(), 0);
         std::iota(possi_height.begin(), possi_height.end(), 0);
 
         body.insert(body.begin(), Point{0,0});
-        body.insert(body.begin(), Point{0,0});
-        body.insert(body.begin(), Point{0,0});
+        body.insert(body.begin(), Point{0,1});
+        body.insert(body.begin(), Point{0,2});
     };
       
     bool move(Field& field){
@@ -178,8 +181,13 @@ int main(){
             else if (key == 'd'){snake.direction = 'r';}
         }
 
+        survived = snake.move(field);
+        newfield = snake.place_snake(field);
+
+
         if (snake.check_fruit(fruit)){
             snake.spawn_fruit(field, fruit);
+            newfield[fruit.y][fruit.x] = 'A';
         }else{          
         remove_part = snake.body.back();
         snake.body.pop_back();
@@ -188,8 +196,6 @@ int main(){
         snake.possi_height.push_back(remove_part.y);
         }
 
-        survived = snake.move(field);
-        newfield = snake.place_snake(field);
 
         if (!(newfield[fruit.y][fruit.x] == '0')){
             newfield[fruit.y][fruit.x] = 'A';
@@ -203,7 +209,7 @@ int main(){
 
        
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        std::this_thread::sleep_for(std::chrono::milliseconds(250));
     }
 
 }
