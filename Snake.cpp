@@ -8,6 +8,7 @@
 #include <numeric>
 #include <random>
 #include <string>
+
 void clearScreen() {
     COORD topLeft = {0, 0};
     HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -26,11 +27,9 @@ void clearScreen() {
 }
 
 
-const int width = 20;
-const int height = 10;
 
-std::random_device rd;
-std::mt19937 gen(rd());
+const int width = 5;
+const int height = 5;
 
 struct Point {
     int x;
@@ -47,8 +46,23 @@ struct Point {
 };
 
 
+
 using Field = std::vector<std::vector<char>>;
 using Body = std::vector<Point>;
+
+std::random_device rd;
+std::mt19937 gen(rd());
+
+
+
+void initialise_pos_positions(Body& possible_positions){
+    for (int i=0;i<width;i++){
+        for (int j=0; j<width; j++){
+            possible_positions.push_back(Point(i,j));
+        }
+    }
+}
+
 
 
 struct Snake{
@@ -56,16 +70,12 @@ struct Snake{
     int y = 2;
     Body body;
     char direction = 'd';
-    std::vector<int> possi_width;
-    std::vector<int> possi_height;
+    Body possible_positions;
+
 
 
     Snake(){
-        possi_width.resize(width);
-        possi_height.resize(height);
-
-        std::iota(possi_width.begin(), possi_width.end(), 0);
-        std::iota(possi_height.begin(), possi_height.end(), 0);
+        initialise_pos_positions(possible_positions);
 
         body.insert(body.begin(), Point{0,0});
         body.insert(body.begin(), Point{0,1});
@@ -79,17 +89,13 @@ struct Snake{
         else if (direction == 'r'){x+=1;}
         Point newpoint{x, y};
         if (!check_move(field, newpoint)){return false;}
-        body.insert(body.begin(), newpoint);
-        
-        possi_width.erase(
-            std::remove(possi_width.begin(), possi_width.end(), x),
-            possi_width.end()
-        );
 
-        possi_height.erase(
-            std::remove(possi_height.begin(), possi_height.end(), y),
-            possi_height.end()
-        );
+        body.insert(body.begin(), newpoint);
+        possible_positions.erase(
+            std::remove(possible_positions.begin(),
+                        possible_positions.end(),
+                        Point{x, y}),
+            possible_positions.end());
 
         return true;
     }
@@ -125,12 +131,10 @@ struct Snake{
     }
 
 
-    void spawn_fruit(Field& field, Point& fruit){
-        std::uniform_int_distribution<> w_dist(0, possi_width.size() - 1);
-        fruit.x = possi_width[w_dist(gen)];
-
-        std::uniform_int_distribution<> h_dist(0, possi_height.size() - 1);
-        fruit.y = possi_height[h_dist(gen)];
+    void spawn_fruit(Point& fruit){
+        std::uniform_int_distribution<> dist(0, possible_positions.size()-1);
+        int random_number = dist(gen);
+        fruit = possible_positions[random_number];
     }
 };
 
@@ -167,7 +171,7 @@ int main(){
     Point remove_part{};
     Point fruit{};
 
-    snake.spawn_fruit(field, fruit);
+    snake.spawn_fruit(fruit);
 
     while (true)
     {
@@ -186,14 +190,12 @@ int main(){
 
 
         if (snake.check_fruit(fruit)){
-            snake.spawn_fruit(field, fruit);
+            snake.spawn_fruit(fruit);
             newfield[fruit.y][fruit.x] = 'A';
         }else{          
         remove_part = snake.body.back();
         snake.body.pop_back();
-
-        snake.possi_width.push_back(remove_part.x);
-        snake.possi_height.push_back(remove_part.y);
+        snake.possible_positions.push_back(remove_part);
         }
 
 
