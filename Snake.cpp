@@ -28,8 +28,8 @@ void clearScreen() {
 
 
 
-const int width = 5;
-const int height = 5;
+const int width = 20;
+const int height = 10;
 
 struct Point {
     int x;
@@ -57,7 +57,7 @@ std::mt19937 gen(rd());
 
 void initialise_pos_positions(Body& possible_positions){
     for (int i=0;i<width;i++){
-        for (int j=0; j<width; j++){
+        for (int j=0; j<height; j++){
             possible_positions.push_back(Point(i,j));
         }
     }
@@ -67,19 +67,22 @@ void initialise_pos_positions(Body& possible_positions){
 
 struct Snake{
     int x = 0;
-    int y = 2;
+    int y = 0;
     Body body;
     char direction = 'd';
     Body possible_positions;
-
-
 
     Snake(){
         initialise_pos_positions(possible_positions);
 
         body.insert(body.begin(), Point{0,0});
-        body.insert(body.begin(), Point{0,1});
-        body.insert(body.begin(), Point{0,2});
+
+        possible_positions.erase(
+        std::remove(possible_positions.begin(),
+                    possible_positions.end(),
+                    Point{0, 0}),
+        possible_positions.end());
+
     };
       
     bool move(Field& field){
@@ -87,10 +90,13 @@ struct Snake{
         else if (direction == 'd'){y+=1;}
         else if (direction == 'l'){x-=1;}
         else if (direction == 'r'){x+=1;}
+
         Point newpoint{x, y};
-        if (!check_move(field, newpoint)){return false;}
+        if (check_move(field, newpoint)==false){return false;}
 
         body.insert(body.begin(), newpoint);
+
+
         possible_positions.erase(
             std::remove(possible_positions.begin(),
                         possible_positions.end(),
@@ -113,15 +119,10 @@ struct Snake{
     }
 
 
-    Field place_snake(Field field){
-        int temp_x;
-        int temp_y;
+    void place_snake(Field& field){
         for (const auto& part : body){
-            temp_x = part.x;
-            temp_y = part.y;
-            field[temp_y][temp_x] = '0';
+            field[part.y][part.x] = '0';
         }
-        return field;
     }
 
 
@@ -179,37 +180,37 @@ int main(){
         {
             char key = _getch();
             // Up Down Left Right
-            if (key == 'w'){snake.direction = 'u';}
-            else if (key == 's'){snake.direction = 'd';}
-            else if (key == 'a'){snake.direction = 'l';}
-            else if (key == 'd'){snake.direction = 'r';}
+            if (key == 'w'&&snake.direction!='d'){snake.direction = 'u';}
+            else if (key == 's'&&snake.direction!='u'){snake.direction = 'd';}
+            else if (key == 'a'&&snake.direction!='r'){snake.direction = 'l';}
+            else if (key == 'd'&&snake.direction!='l'){snake.direction = 'r';}
         }
 
         survived = snake.move(field);
-        newfield = snake.place_snake(field);
+        snake.place_snake(field);
 
 
         if (snake.check_fruit(fruit)){
             snake.spawn_fruit(fruit);
-            newfield[fruit.y][fruit.x] = 'A';
+            field[fruit.y][fruit.x] = 'A';
         }else{          
         remove_part = snake.body.back();
+        field[remove_part.y][remove_part.x] = ' ';
         snake.body.pop_back();
+
         snake.possible_positions.push_back(remove_part);
         }
 
 
-        if (!(newfield[fruit.y][fruit.x] == '0')){
-            newfield[fruit.y][fruit.x] = 'A';
+        if (field[fruit.y][fruit.x] != '0'){
+            field[fruit.y][fruit.x] = 'A';
         }
-        display_field(newfield);
+        display_field(field);
 
         if (!survived){
             std::cout<<"You Lost!";
             break;
         }
-
-       
 
         std::this_thread::sleep_for(std::chrono::milliseconds(250));
     }
