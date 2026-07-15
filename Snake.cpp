@@ -113,16 +113,23 @@ struct Snake{
     }
 
 
-    bool check_fruit(Point fruit){
+    bool check_fruit(Point& fruit){
         return Point{x,y} == fruit;
     }
 
 
-    void spawn_fruit(Point& fruit){
+    void spawn_fruit(Point& fruit) const{
         if (possible_positions.empty()){return;}
         std::uniform_int_distribution<> dist(0, possible_positions.size()-1);
         int random_number = dist(gen);
         fruit = possible_positions[random_number];
+    }
+
+    void remove_back_part(Field& field){
+        Point remove_part = body.back();
+        field[remove_part.y][remove_part.x] = ' ';
+        body.pop_back();
+        possible_positions.push_back(remove_part);
     }
 };
 
@@ -136,7 +143,7 @@ std::string create_line(int amount){
 }
 
 
-void display_field(Field field){
+void display_field(Field& field){
     clearScreen();
     std::cout<< create_line(field[0].size()+1) <<std::endl;
     for (const auto&row : field){
@@ -156,7 +163,7 @@ int main(){
     bool survived = true;
     Field newfield;
     Field field(height, std::vector<char>(width, ' '));
-    Point remove_part{};
+   
     Point fruit{};
 
     snake.spawn_fruit(fruit);
@@ -183,10 +190,7 @@ int main(){
             snake.spawn_fruit(fruit);
             field[fruit.y][fruit.x] = 'A';
         }else{          
-        remove_part = snake.body.back();
-        field[remove_part.y][remove_part.x] = ' ';
-        snake.body.pop_back();
-        snake.possible_positions.push_back(remove_part);
+            snake.remove_back_part(field);
         }
 
         // check fruit
@@ -200,8 +204,6 @@ int main(){
         }
         //display
         display_field(field);
-
-
 
         std::this_thread::sleep_for(std::chrono::milliseconds(250));
     }
