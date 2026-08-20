@@ -1,184 +1,177 @@
 # Snake
 
-A C++ implementation of the classic **Snake** game, built using **SFML**.
+A C++ implementation of the classic **Snake** game, played entirely in the terminal.
 
-The project was developed to practise object-oriented C++ programming and real-time game development, including game loops, keyboard input, movement, collision detection, dynamic data structures, and graphical rendering.
+The project was built to practise fundamental C++ programming concepts through a simple interactive game, including classes, vectors, keyboard input, game-state management, collision detection, and real-time updates.
 
 ## Features
 
 * Classic Snake gameplay
-* Real-time keyboard controls
-* Snake grows when food is collected
-* Randomly positioned food
-* Self-collision detection
-* Screen boundary collision
+* Terminal-based rendering
+* Real-time movement
+* Keyboard controls
+* Food generation
+* Snake growth
 * Score tracking
-* Increasing snake length
-* Real-time rendering using SFML
+* Self-collision detection
+* Boundary collision detection
+* Increasing difficulty as the snake grows
 
 ## Controls
 
 | Key | Action     |
 | --- | ---------- |
-| `↑` | Move up    |
-| `↓` | Move down  |
-| `←` | Move left  |
-| `→` | Move right |
+| `W` | Move up    |
+| `A` | Move left  |
+| `S` | Move down  |
+| `D` | Move right |
 
 ## How It Works
 
-The game operates using a continuous update-and-render loop:
+The game runs through a continuous game loop:
 
 ```text
-Input
-  │
-  ▼
-Update Direction
-  │
-  ▼
-Move Snake
-  │
-  ├── Check Food
-  │
-  ├── Check Self Collision
-  │
-  └── Check Boundaries
-  │
-  ▼
-Update Game State
-  │
-  ▼
-Render
-  │
-  └──────► Repeat
-```
-
-The snake is represented as a collection of segments. During each movement update, a new head position is calculated based on the current direction and the rest of the body follows the previous positions.
-
-## Movement
-
-The snake moves continuously in one of four directions.
-
-Rather than allowing arbitrary movement, the game restricts the snake to horizontal and vertical movement:
-
-```text
-       ↑
-       │
-←──── S ────→
-       │
-       ↓
-```
-
-The direction can be changed using the arrow keys, while preventing the snake from immediately reversing direction into itself.
-
-## Snake Growth
-
-When the snake reaches the food, its length increases.
-
-The basic gameplay loop is:
-
-```text
-        ┌──────────────┐
-        │ Move Snake   │
-        └──────┬───────┘
+        ┌─────────────┐
+        │ Read Input  │
+        └──────┬──────┘
                │
                ▼
-        ┌──────────────┐
-        │ Food eaten?  │
-        └──────┬───────┘
-          Yes  │  No
-               │
-       ┌───────▼───────┐
-       │ Increase      │
-       │ snake length  │
-       └───────┬───────┘
+        ┌─────────────┐
+        │ Move Snake  │
+        └──────┬──────┘
                │
                ▼
-        Spawn new food
+        ┌─────────────┐
+        │ Check       │
+        │ Collisions  │
+        └──────┬──────┘
+               │
+               ▼
+        ┌─────────────┐
+        │ Check Food  │
+        └──────┬──────┘
+               │
+               ▼
+        ┌─────────────┐
+        │ Render      │
+        │ Terminal    │
+        └──────┬──────┘
+               │
+               └──────────► Repeat
 ```
 
-This creates the central progression mechanic of Snake: the longer the snake becomes, the more difficult it is to avoid collisions.
+The terminal is repeatedly redrawn to give the appearance of continuous movement.
+
+## Snake Representation
+
+The snake's body is represented as a collection of positions.
+
+Each segment has a position on the game board, with the first element representing the snake's head.
+
+When the snake moves:
+
+1. A new head position is calculated.
+2. The new head is added to the front of the snake.
+3. The final segment is removed.
+4. If food was collected, the final segment is retained, causing the snake to grow.
+
+This provides a simple way to model the movement of the entire snake without individually calculating the movement of every segment.
+
+## Food
+
+Food is generated at a random position on the game board.
+
+When the snake's head reaches the food:
+
+* The score increases.
+* The snake grows.
+* A new food position is generated.
+
+The food position is checked against the snake so that it does not spawn inside the snake's body.
 
 ## Collision Detection
 
-The game checks the snake's position against the objects and boundaries of the game world.
+The game checks for several types of collision.
 
-Collision checks include:
+### Boundary Collision
 
-* Snake head vs. food
-* Snake head vs. its own body
-* Snake head vs. the edge of the game area
+The game ends if the snake's head moves outside the playable area.
 
-Self-collision becomes increasingly important as the snake grows, since the available space decreases while the number of occupied positions increases.
+### Self Collision
 
-## Game Loop
+The snake's head is compared with the positions of the remaining body segments.
 
-SFML provides the window, event handling, rendering and timing functionality required by the game.
+If the head occupies the same position as any part of the body, the game ends.
 
-Each iteration of the main loop handles three main stages:
+### Food Collision
 
-### 1. Input
+If the head occupies the same position as the food, the snake grows and the score is increased.
 
-SFML events and keyboard state are used to determine whether the player has changed direction.
+## Terminal Rendering
 
-### 2. Update
+Instead of using a graphics library, the game uses standard terminal output to represent the game board.
 
-The game state is updated based on the current direction and elapsed time.
+A typical frame consists of:
 
-This includes:
+```text
++--------------------+
+|                    |
+|       ####         |
+|          O         |
+|                    |
+|             *      |
+|                    |
++--------------------+
 
-* Moving the snake
-* Checking for food
-* Growing the snake
-* Checking collisions
-* Updating the score
+Score: 5
+```
 
-### 3. Rendering
+The terminal is cleared and redrawn as the game state changes.
 
-The current state of the game is drawn to the SFML window.
-
-This separation between **input, game state updates and rendering** is a fundamental pattern used in real-time applications and game engines.
+This keeps the project lightweight while still requiring the implementation of a real-time update loop.
 
 ## Technologies
 
 * **C++**
-* **SFML**
 * Standard C++ Library
+* Terminal/console I/O
 * Object-oriented programming
-* 2D game development
-* Real-time input handling
-* Collision detection
+* `std::vector`
+* Random number generation
 
 ## Building and Running
 
 ### Requirements
 
 * A C++ compiler
-* SFML
-* A configured C++ development environment
+* A terminal capable of displaying the game's characters
 
-SFML provides cross-platform windowing and graphics functionality for C++ applications.
+### Compile
 
-### Clone
+Using `g++`:
 
 ```bash
-git clone https://github.com/TobyStanislaus/Snake.git
-cd Snake
+g++ *.cpp -o Snake
 ```
 
-Configure SFML with your compiler and build the project.
+### Run
 
-After compilation, run the generated executable.
+On Windows:
+
+```bash
+Snake.exe
+```
+
+On Linux/macOS:
+
+```bash
+./Snake
+```
 
 ## Project Structure
 
 ```text
 Snake/
-├── main.cpp
-├── Snake.cpp
-├── Snake.hpp
-├── Food.cpp
-├── Food.hpp
 ├── ...
 ├── LICENSE
 └── README.md
@@ -186,37 +179,32 @@ Snake/
 
 ## What I Learned
 
-This project was an early application of C++ to real-time graphical programming.
+This project provided practice with fundamental C++ programming concepts, including:
 
-It provided practice with:
-
-* Object-oriented C++ design
-* Classes and encapsulation
-* Header and implementation files
-* SFML graphics and event handling
-* Real-time game loops
-* Keyboard input
-* 2D coordinate systems
-* Collision detection
-* Dynamic data structures
+* Classes and object-oriented design
+* `std::vector` and dynamic collections
+* References and pointers
+* Functions and program decomposition
+* Terminal input/output
 * Random number generation
+* Collision detection
 * Managing changing game state
+* Implementing a real-time game loop
+* Debugging state-dependent behaviour
 
 ## Future Improvements
 
 Possible extensions include:
 
-* Increasing difficulty as the score increases
+* Increasing the game speed as the score increases
 * High-score persistence
-* Pause and resume functionality
-* Start and game-over menus
-* Sound effects
-* Improved graphical effects
-* Configurable game speed
-* Multiple game modes
-* A grid-based movement system
-* CMake-based project configuration
-* Current bug where if you go down, then back on yourself quickly you can run into yourself
+* Pause functionality
+* Improved terminal graphics
+* Multiple difficulty levels
+* Additional game modes
+* Configurable board sizes
+* A graphical version using SFML
+* CMake-based build configuration
 
 ## License
 
